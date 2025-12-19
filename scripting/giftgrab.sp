@@ -1,8 +1,8 @@
 #include <sourcemod>
 #include <sdktools>
 
-#define PLUGIN_AUTHOR "Leeson, Ballganda"
-#define PLUGIN_VERSION "1.01"
+#define PLUGIN_AUTHOR "Leeson, BallGanda"
+#define PLUGIN_VERSION "2.00"
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -100,36 +100,71 @@ public void Event_GiftGrab(Event event, const char[] name, bool dontBroadcast) {
 	}
 }
 
-public void SpawnGift(float position[3]) {
-	int pGift = CreateEntityByName("holiday_gift");
-
-	//Thanks to Zephyrus on AlliedModders for rotation code
-	//https://forums.alliedmods.net/showthread.php?t=175185
-	if (pGift == -1) {
-		return;
-    }
-        
-    DispatchSpawn(pGift);
-
-	TeleportEntity(pGift, position, NULL_VECTOR, NULL_VECTOR);
-
-	int pRotator = CreateEntityByName("func_rotating");
-    if (pRotator == -1)
-    {
-        // Rotation failed — leave the gift unrotated
+public void SpawnGift(float position[3])
+{
+    int gift = CreateEntityByName("holiday_gift");
+    if (gift == -1)
         return;
+
+    float start[3];
+    float end[3];
+    float ground[3];
+
+    start[0] = position[0];
+    start[1] = position[1];
+    start[2] = position[2] + 32.0;
+
+    end[0] = position[0];
+    end[1] = position[1];
+    end[2] = position[2] - 2048.0;
+
+    TR_TraceRayFilter(start, end, MASK_SOLID, RayType_EndPoint, TraceFilter_WorldOnly, 0);
+
+    if (TR_DidHit())
+    {
+        TR_GetEndPosition(ground);
     }
-	DispatchKeyValueVector(pRotator, "origin", position);
-	DispatchKeyValue(pRotator, "maxspeed", "200");
-	DispatchKeyValue(pRotator, "friction", "0");
-	DispatchKeyValue(pRotator, "dmg", "0");
-	DispatchKeyValue(pRotator, "solid", "0");
-	DispatchKeyValue(pRotator, "spawnflags", "64");
-	DispatchSpawn(pRotator);
-		
-	SetVariantString("!activator");
-	AcceptEntityInput(pGift, "SetParent", pRotator);
-	AcceptEntityInput(pRotator, "Start");
-		
-	SetEntPropEnt(pGift, Prop_Send, "m_hEffectEntity", pRotator);
+    else
+    {
+        ground[0] = position[0];
+        ground[1] = position[1];
+        ground[2] = position[2];
+    }
+
+    // Hover height
+    ground[2] += 18.0;
+
+    DispatchSpawn(gift);
+    TeleportEntity(gift, ground, NULL_VECTOR, NULL_VECTOR);
+
+    // Freeze so it never sinks
+    SetEntityMoveType(gift, MOVETYPE_NONE);
+
+    // Spin via timer (spam-free)
+    CreateTimer(0.05, Timer_SpinGift, EntIndexToEntRef(gift),
+        TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+}
+
+
+public Action Timer_SpinGift(Handle timer, any ref)
+{
+    int ent = EntRefToEntIndex(ref);
+    if (ent == INVALID_ENT_REFERENCE)
+        return Plugin_Stop;
+
+    float ang[3];
+    GetEntPropVector(ent, Prop_Data, "m_angRotation", ang);
+
+    ang[1] += 10.0; // degrees per tick (0.05s). 10 = 200 deg/sec
+    if (ang[1] >= 360.0)
+        ang[1] -= 360.0;
+
+    TeleportEntity(ent, NULL_VECTOR, ang, NULL_VECTOR);
+    return Plugin_Continue;
+}
+
+public bool TraceFilter_WorldOnly(int entity, int contentsMask, any data)
+{
+    // Only collide with world (ignore entities)
+    return (entity == 0);
 }
