@@ -15,5 +15,6 @@ Enables the gift grab event in Counter Strike: Source. Picked up drops will coun
 The gifts won't drop or count unless the machine running the server has it's system date between 1st December to 1st January. So you can either wait for this date or if your okay with changing your date for seasonal achievements then that's also an option.
 
 **Credit to:**  
-[Zephyrus](https://forums.alliedmods.net/member.php?u=79786) for code around rotating and despawning the gift box from their [Gifts](https://forums.alliedmods.net/showthread.php?t=175185) plugin  
+[Zephyrus](https://forums.alliedmods.net/member.php?u=79786) for code around rotating and despawning the gift box from their [Gifts](https://forums.alliedmods.net/showthread.php?t=175185) plugin (this is replaced in BallGanda version)
 [Silvers](https://forums.alliedmods.net/member.php?u=85778) for the really helpful [UserMsg Hooks](https://forums.alliedmods.net/showthread.php?t=319685) plugin that helped me understand usermessages.
+
